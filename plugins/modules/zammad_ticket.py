@@ -104,7 +104,7 @@ options:
     type: str
   priority:
     description:
-      - The priority of the ticket (e.g., 'low', 'normal', 'high').
+      - The priority of the ticket (e.g., '1 low', '2 normal', '3 high').
     required: false
     type: str
 """
@@ -124,7 +124,7 @@ EXAMPLES = r"""
     body: "The internet is not working since this morning."
     internal: false
     ticket_state: "open"
-    priority: "high"
+    priority: "3 high"
 
 - name: Update an existing ticket
   zammad_ticket:
@@ -141,7 +141,7 @@ EXAMPLES = r"""
     body: "The internet issue is being worked on."
     internal: true
     ticket_state: "pending"
-    priority: "normal"
+    priority: "2 normal"
 
 - name: Close a ticket
   zammad_ticket:
