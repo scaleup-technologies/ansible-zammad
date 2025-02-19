@@ -358,7 +358,7 @@ def run_module():
         body=dict(type="str", required=False, default=None),
         internal=dict(type="bool", required=False, default="false"),
         ticket_state=dict(type="str", required=False, default=None),
-        priority=dict(type="str", required=False, default=None)
+        priority=dict(type="str", required=False, default="2 normal")
     )
 
     result = dict(changed=False, ticket_id=None, status_code=0, message="")
