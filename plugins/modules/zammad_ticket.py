@@ -207,7 +207,7 @@ def make_request(module, method, zammad_url, api_user, api_secret, api_token, da
     return result, info["status"]
 
 
-def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, customer, title, group, subject, body, internal, ticket_state, priority):
+def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_fields):
     article = {
         "subject": subject,
         "body": body,
@@ -222,13 +222,14 @@ def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, cu
             "group": group,
             "state": ticket_state,
             "customer": customer,
-            **({"priority": priority} if priority is not None else {})
+            **({"priority": priority} if priority is not None else {}),
+            **custom_fields
         }.items() if value is not None}
     }
     return make_request(module, "POST", zammad_url, api_user, api_secret, api_token, data)
 
 
-def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority):
+def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_fields):
     article = {}
     if body:
         article = {
@@ -244,7 +245,9 @@ def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id
             "title": title,
             "group": group,
             "state": ticket_state,
-            **({"priority": priority} if priority is not None else {})        }.items() if value is not None}
+            **({"priority": priority} if priority is not None else {}),
+            **custom_fields
+        }.items() if value is not None}
     }
     return make_request(module, "PUT", zammad_url, api_user, api_secret, api_token, data, ticket_id)
 
@@ -370,7 +373,8 @@ def run_module():
         body=dict(type="str", required=False, default=None),
         internal=dict(type="bool", required=False, default="false"),
         ticket_state=dict(type="str", required=False, default=None),
-        priority=dict(type="str", required=False, default=None)
+        priority=dict(type="str", required=False, default=None),
+        custom_fields=dict(type="dict", required=False, default={})
     )
 
     module_args = {**module_args}
@@ -470,7 +474,8 @@ def run_module():
                 module.params["body"],
                 module.params["internal"],
                 module.params["ticket_state"],
-                module.params["priority"]
+                module.params["priority"],
+                module.params["custom_fields"]
             )
             result.update({
                 "changed": True,
