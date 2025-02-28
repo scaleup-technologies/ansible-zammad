@@ -14,8 +14,9 @@ module: zammad_ticket_idoit
 short_description: Updates a Zammad ticket with i-doit object IDs.
 
 description:
-  - This module allows you to associate or update an i-doit object ID for a specific ticket in the Zammad ticketing system.
-  - It uses the Zammad API to perform the operation securely.
+  - This module allows you to associate or update i-doit object IDs for a specific ticket in the Zammad ticketing system.
+  - It uses the Zammad API to securely perform the operation. The module can either add or remove object IDs from a ticket based on the specified state.
+  - The module supports both adding and removing i-doit object associations.
 
 author:
   - Melvin Ziemann (@cloucs)  <ziemann.melvin@gmail.com>
@@ -47,27 +48,51 @@ options:
       - The ID of the Zammad ticket to be updated.
     type: int
     required: true
-  object_id:
+  object_ids:
     description:
-      - The i-doit object ID to associate with the ticket.
+      - A list of i-doit object IDs to associate with the ticket.
+    type: list
+    elements: str
+    required: true
+  state:
+    description:
+      - The desired state of the operation. 
+      - If "present", the i-doit object IDs will be added to the ticket.
+      - If "absent", the i-doit object IDs will be removed from the ticket.
     type: str
     required: true
+    choices:
+      - present
+      - absent
 
 notes:
   - Ensure the API user has sufficient permissions to update tickets.
   - The Zammad instance must be reachable from the Ansible control node.
+  - The module will fail if the API request to Zammad fails or returns an error.
+  - If "absent" state is specified, an empty list is sent to remove existing i-doit object IDs.
 """
 
 EXAMPLES = r"""
 # Example usage of zammad_ticket_idoit module
-- name: Associate an i-doit object with a Zammad ticket
-  zammad_change_idoit_object:
+- name: Associate i-doit object IDs with a Zammad ticket
+  zammad_ticket_idoit:
     zammad_access:
       zammad_url: "https://zammad.example.com"
       api_user: "admin@example.com"
       api_secret: "secure_password"
     ticket_id: 12345
-    object_id: "56789"
+    object_ids: ["56789", "98765"]
+    state: present
+
+- name: Remove i-doit object IDs from a Zammad ticket
+  zammad_ticket_idoit:
+    zammad_access:
+      zammad_url: "https://zammad.example.com"
+      api_user: "admin@example.com"
+      api_secret: "secure_password"
+    ticket_id: 12345
+    object_ids: ["56789"]
+    state: absent
 """
 
 RETURN = r"""

@@ -30,23 +30,28 @@ options:
   zammad_access:
     description:
       - Dictionary containing the Zammad API credentials.
-    required: true
+    required: true 
     type: dict
     suboptions:
       zammad_url:
         description:
           - The fully qualified domain name of the Zammad instance (e.g., https://zammad.example.com).
-        required: true
+        required: true 
         type: str
       api_user:
         description:
           - The username used to authenticate with the Zammad API.
-        required: true
+        required: false 
         type: str
       api_secret:
         description:
           - The password or API key used to authenticate with the Zammad API.
-        required: true
+        required: false 
+        type: str
+      api_token:
+        description:
+          - The API token used to authenticate with the Zammad API.
+        required: false
         type: str
   state:
     description:
@@ -107,6 +112,12 @@ options:
       - The priority of the ticket (e.g., '1 low', '2 normal', '3 high').
     required: false
     type: str
+  custom_objects:
+    description:
+      - Custom objects that can be passed to the Zammad API to extend the functionality.
+    required: false
+    type: dict
+    default: {}
 """
 
 EXAMPLES = r"""
@@ -116,6 +127,7 @@ EXAMPLES = r"""
       zammad_url: "https://zammad.example.com"
       api_user: "api_user"
       api_secret: "api_secret"
+      api_token: "api_token"
     state: "present"
     title: "Internet Outage"
     group: "Support"
@@ -132,6 +144,7 @@ EXAMPLES = r"""
       zammad_url: "https://zammad.example.com"
       api_user: "api_user"
       api_secret: "api_secret"
+      api_toke: "api_token"
     state: "present"
     ticket_id: 12345
     title: "Internet Outage - Follow Up"
@@ -149,6 +162,7 @@ EXAMPLES = r"""
       zammad_url: "https://zammad.example.com"
       api_user: "api_user"
       api_secret: "api_secret"
+      api_token: "api_token"
     state: "absent"
     ticket_id: 12345
     ticket_state: "closed"
@@ -360,7 +374,7 @@ def run_module():
                 zammad_url=dict(type="str", required=True),
                 api_user=dict(type="str", required=False),
                 api_secret=dict(type="str", required=False, no_log=True),
-                api_token=dict(type="str", equired=False, no_log=True)
+                api_token=dict(type="str", required=False, no_log=True)
             )
         ),
         state=dict(type="str", required=True, choices=("present", "absent")),
