@@ -4,6 +4,10 @@
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+import json
+import base64
 
 
 __metaclass__ = type
@@ -30,23 +34,23 @@ options:
   zammad_access:
     description:
       - Dictionary containing the Zammad API credentials.
-    required: true 
+    required: true
     type: dict
     suboptions:
       zammad_url:
         description:
           - The fully qualified domain name of the Zammad instance (e.g., https://zammad.example.com).
-        required: true 
+        required: true
         type: str
       api_user:
         description:
           - The username used to authenticate with the Zammad API.
-        required: false 
+        required: false
         type: str
       api_secret:
         description:
           - The password or API key used to authenticate with the Zammad API.
-        required: false 
+        required: false
         type: str
       api_token:
         description:
@@ -186,12 +190,6 @@ message:
   sample: "Ticket created successfully."
 """
 
-#from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-import json
-import base64
 
 def make_request(module, method, zammad_url, api_user, api_secret, api_token, data, ticket_id=None, endpoint=None):
     headers = {"Content-type": "application/json"}
@@ -348,9 +346,6 @@ def validate_params(module, required_params):
 
     if not any(zammad_access.get(param) for param in ["api_token", "api_user", "api_secret"]):
         module.fail_json(msg="Missing required zammad_access parameters: api_token or api_user and api_secret.")
-
-    #if not all(zammad_access.get(param) for param in ["zammad_url", "api_user", "api_secret"]):
-    #    module.fail_json(msg="Missing required zammad_access parameters: zammad_url, api_user, and/or api_secret.")
 
     for param in required_params:
         if param != "priority" and not module.params.get(param):

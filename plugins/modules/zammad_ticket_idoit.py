@@ -4,6 +4,10 @@
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+import json
+import base64
 
 __metaclass__ = type
 
@@ -56,7 +60,7 @@ options:
     required: true
   state:
     description:
-      - The desired state of the operation. 
+      - The desired state of the operation.
       - If "present", the i-doit object IDs will be added to the ticket.
       - If "absent", the i-doit object IDs will be removed from the ticket.
     type: str
@@ -118,12 +122,6 @@ message:
   sample: "Ticket successfully updated."
 """
 
-#from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-import json
-import base64
 
 def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_id=None, endpoint=None):
     headers = {"Content-type": "application/json"}
@@ -147,6 +145,7 @@ def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_
         module.fail_json(msg="Failed to parse JSON response")
     return result, info["status"]
 
+
 def change_idoit_object(module, zammad_url, api_user, api_secret, ticket_id, object_ids):
     data = {
         "preferences": {
@@ -156,6 +155,7 @@ def change_idoit_object(module, zammad_url, api_user, api_secret, ticket_id, obj
         }
     }
     return make_request(module, "PUT", zammad_url, api_user, api_secret, data, ticket_id)
+
 
 def run_module():
     module_args = dict(
@@ -202,9 +202,10 @@ def run_module():
     except ValueError as e:
         module.fail_json(msg=str(e), **result)
 
+
 def main():
     run_module()
 
+
 if __name__ == "__main__":
     main()
-
