@@ -5,9 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 __metaclass__ = type
-
 
 DOCUMENTATION = r"""
 ---
@@ -96,7 +94,32 @@ message:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
+#from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
+from ansible.module_utils.urls import fetch_url
+import json
+import base64
+
+def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_id=None, endpoint=None):
+    headers = {"Content-type": "application/json"}
+    auth = f"{api_user}:{api_secret}"
+    encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
+    headers["Authorization"] = f"Basic {encoded_auth}"
+    url = f"{zammad_url}/api/v1/tickets/{ticket_id}" if ticket_id else f"{zammad_url}/api/v1/{endpoint or 'tickets/'}"
+    data_json = json.dumps(data) if data else None
+    response, info = fetch_url(
+        module,
+        url,
+        method=method,
+        data=data_json,
+        headers=headers
+    )
+    if info["status"] >= 400:
+        module.fail_json(msg=f"API request failed: {info['msg']}", status_code=info["status"])
+    try:
+        result = json.load(response)
+    except json.JSONDecodeError:
+        module.fail_json(msg="Failed to parse JSON response")
+    return result, info["status"]
 
 
 def change_idoit_object(module, zammad_url, api_user, api_secret, ticket_id, object_id):
@@ -118,16 +141,17 @@ def run_module():
             options=dict(
                 zammad_url=dict(type="str", required=True),
                 api_user=dict(type="str", required=True),
-                api_secret=dict(type="str", required=True, no_log=True)
+                api_secret=dict(type="str", required=True, no_log=True),
             )
         ),
         ticket_id=dict(type="int", required=True),
-        object_id=dict(type="str", required=True)
+        object_id=dict(type="str", required=True),
+        state=dict(type="str", required=True, choices=["present", "absent"])
     )
 
-    module_args = {**module_args}
+    #module_args = {**module_args}
 
-    result = dict(changed=False, ticket_id=None, status_code=0, message="")
+    result = dict(changed=False, ticket_id=None, status_code=0, message="Success")
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     if module.check_mode:
@@ -137,6 +161,8 @@ def run_module():
     zammad_url = zammad_access["zammad_url"]
     api_user = zammad_access["api_user"]
     api_secret = zammad_access["api_secret"]
+    state = module.params["state"]
+    object_id = module.params["object_id"] if state == "present" else 0
 
     try:
         ticket_data, status_code = change_idoit_object(
@@ -145,9 +171,10 @@ def run_module():
             api_user,
             api_secret,
             module.params["ticket_id"],
-            module.params["object_id"]
+            object_id
         )
 
+        result.update(changed=True, ticket_id=module.params["ticket_id"], status_code=status_code, message="Success")
         module.exit_json(**result)
 
     except ValueError as e:
