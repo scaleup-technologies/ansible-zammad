@@ -207,7 +207,7 @@ def make_request(module, method, zammad_url, api_user, api_secret, api_token, da
     return result, info["status"]
 
 
-def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_fields):
+def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_objects):
     article = {
         "subject": subject,
         "body": body,
@@ -223,13 +223,13 @@ def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, cu
             "state": ticket_state,
             "customer": customer,
             **({"priority": priority} if priority is not None else {}),
-            **custom_fields
+            **custom_objects
         }.items() if value is not None}
     }
     return make_request(module, "POST", zammad_url, api_user, api_secret, api_token, data)
 
 
-def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_fields):
+def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority, custom_objects):
     article = {}
     if body:
         article = {
@@ -246,7 +246,7 @@ def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id
             "group": group,
             "state": ticket_state,
             **({"priority": priority} if priority is not None else {}),
-            **custom_fields
+            **custom_objects
         }.items() if value is not None}
     }
     return make_request(module, "PUT", zammad_url, api_user, api_secret, api_token, data, ticket_id)
@@ -374,7 +374,7 @@ def run_module():
         internal=dict(type="bool", required=False, default="false"),
         ticket_state=dict(type="str", required=False, default=None),
         priority=dict(type="str", required=False, default=None),
-        custom_fields=dict(type="dict", required=False, default={})
+        custom_objects=dict(type="dict", required=False, default={})
     )
 
     module_args = {**module_args}
@@ -475,7 +475,7 @@ def run_module():
                 module.params["internal"],
                 module.params["ticket_state"],
                 module.params["priority"],
-                module.params["custom_fields"]
+                module.params["custom_objects"]
             )
             result.update({
                 "changed": True,
