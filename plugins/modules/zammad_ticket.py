@@ -179,11 +179,16 @@ from ansible.module_utils.urls import fetch_url
 import json
 import base64
 
-def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_id=None, endpoint=None):
+def make_request(module, method, zammad_url, api_user, api_secret, api_token, data, ticket_id=None, endpoint=None):
     headers = {"Content-type": "application/json"}
-    auth = f"{api_user}:{api_secret}"
-    encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
-    headers["Authorization"] = f"Basic {encoded_auth}"
+
+    if api_token:
+        headers["Authorization"] = f"Token {api_token}"
+    else:
+        auth = f"{api_user}:{api_secret}"
+        encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
+        headers["Authorization"] = f"Basic {encoded_auth}"
+
     url = f"{zammad_url}/api/v1/tickets/{ticket_id}" if ticket_id else f"{zammad_url}/api/v1/{endpoint or 'tickets/'}"
     data_json = json.dumps(data) if data else None
     response, info = fetch_url(
@@ -202,7 +207,7 @@ def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_
     return result, info["status"]
 
 
-def create_ticket(module, zammad_url, api_user, api_secret, owner, customer, title, group, subject, body, internal, ticket_state, priority):
+def create_ticket(module, zammad_url, api_user, api_secret, api_token, owner, customer, title, group, subject, body, internal, ticket_state, priority):
     article = {
         "subject": subject,
         "body": body,
@@ -220,10 +225,10 @@ def create_ticket(module, zammad_url, api_user, api_secret, owner, customer, tit
             **({"priority": priority} if priority is not None else {})
         }.items() if value is not None}
     }
-    return make_request(module, "POST", zammad_url, api_user, api_secret, data)
+    return make_request(module, "POST", zammad_url, api_user, api_secret, api_token, data)
 
 
-def update_ticket(module, zammad_url, api_user, api_secret, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority):
+def update_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id, owner, customer, title, group, subject, body, internal, ticket_state, priority):
     article = {}
     if body:
         article = {
@@ -241,20 +246,20 @@ def update_ticket(module, zammad_url, api_user, api_secret, ticket_id, owner, cu
             "state": ticket_state,
             **({"priority": priority} if priority is not None else {})        }.items() if value is not None}
     }
-    return make_request(module, "PUT", zammad_url, api_user, api_secret, data, ticket_id)
+    return make_request(module, "PUT", zammad_url, api_user, api_secret, api_token, data, ticket_id)
 
 
-def close_ticket(module, zammad_url, api_user, api_secret, ticket_id):
+def close_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id):
     data = {"state": "closed"}
-    return make_request(module, "PUT", zammad_url, api_user, api_secret, data, ticket_id)
+    return make_request(module, "PUT", zammad_url, api_user, api_secret, api_token, data, ticket_id)
 
 
-def get_ticket(module, zammad_url, api_user, api_secret, ticket_id):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, ticket_id)
+def get_ticket(module, zammad_url, api_user, api_secret, api_token, ticket_id):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, ticket_id)
 
 
-def get_users(module, zammad_url, api_user, api_secret):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, endpoint="users")
+def get_users(module, zammad_url, api_user, api_secret, api_token):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, endpoint="users")
 
 
 def get_customer_email(ticket_data, customers):
@@ -280,8 +285,8 @@ def get_owner_id(owner_name, owners):
             return owner["id"]
 
 
-def get_groups(module, zammad_url, api_user, api_secret):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, endpoint="groups")
+def get_groups(module, zammad_url, api_user, api_secret, api_token):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, endpoint="groups")
 
 
 def get_group_name(ticket_data, groups):
@@ -291,8 +296,8 @@ def get_group_name(ticket_data, groups):
             return group["name"]
 
 
-def get_ticket_states(module, zammad_url, api_user, api_secret):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, endpoint="ticket_states")
+def get_ticket_states(module, zammad_url, api_user, api_secret, api_token):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, endpoint="ticket_states")
 
 
 def get_ticket_state_name(ticket_data, ticket_states):
@@ -302,8 +307,8 @@ def get_ticket_state_name(ticket_data, ticket_states):
             return ticket_state["name"]
 
 
-def get_priorities(module, zammad_url, api_user, api_secret):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, endpoint="ticket_priorities")
+def get_priorities(module, zammad_url, api_user, api_secret, api_token):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, endpoint="ticket_priorities")
 
 
 def get_priority_name(ticket_data, priorities):
@@ -313,8 +318,8 @@ def get_priority_name(ticket_data, priorities):
             return priority["name"]
 
 
-def get_ticket_articles(module, zammad_url, api_user, api_secret, ticket_id):
-    return make_request(module, "GET", zammad_url, api_user, api_secret, {}, endpoint=f"ticket_articles/by_ticket/{ticket_id}")
+def get_ticket_articles(module, zammad_url, api_user, api_secret, api_token, ticket_id):
+    return make_request(module, "GET", zammad_url, api_user, api_secret, api_token, {}, endpoint=f"ticket_articles/by_ticket/{ticket_id}")
 
 
 def get_last_article_data(ticket_articles, article_object):
@@ -323,8 +328,13 @@ def get_last_article_data(ticket_articles, article_object):
 
 def validate_params(module, required_params):
     zammad_access = module.params.get("zammad_access", {})
-    if not all(zammad_access.get(param) for param in ["zammad_url", "api_user", "api_secret"]):
-        module.fail_json(msg="Missing required zammad_access parameters: zammad_url, api_user, and/or api_secret.")
+
+    if not any(zammad_access.get(param) for param in ["api_token", "api_user", "api_secret"]):
+        module.fail_json(msg="Missing required zammad_access parameters: api_token or api_user and api_secret.")
+
+    #if not all(zammad_access.get(param) for param in ["zammad_url", "api_user", "api_secret"]):
+    #    module.fail_json(msg="Missing required zammad_access parameters: zammad_url, api_user, and/or api_secret.")
+
     for param in required_params:
         if param != "priority" and not module.params.get(param):
             module.fail_json(msg=f"Missing required parameter: {param}")
@@ -345,8 +355,9 @@ def run_module():
             required=True,
             options=dict(
                 zammad_url=dict(type="str", required=True),
-                api_user=dict(type="str", required=True),
-                api_secret=dict(type="str", required=True, no_log=True)
+                api_user=dict(type="str", required=False),
+                api_secret=dict(type="str", required=False, no_log=True),
+                api_token=dict(type="str", equired=False, no_log=True)
             )
         ),
         state=dict(type="str", required=True, choices=("present", "absent")),
@@ -372,20 +383,21 @@ def run_module():
 
     zammad_access = module.params["zammad_access"]
     zammad_url = zammad_access["zammad_url"]
-    api_user = zammad_access["api_user"]
-    api_secret = zammad_access["api_secret"]
+    api_user = zammad_access.get("api_user")
+    api_secret = zammad_access.get("api_secret")
+    api_token = zammad_access.get("api_token")
 
     try:
-        users, status_code = get_users(module, zammad_url, api_user, api_secret)
-        groups, status_code = get_groups(module, zammad_url, api_user, api_secret)
-        ticket_states, status_code = get_ticket_states(module, zammad_url, api_user, api_secret)
-        priorities, status_code = get_priorities(module, zammad_url, api_user, api_secret)
+        users, status_code = get_users(module, zammad_url, api_user, api_secret, api_token)
+        groups, status_code = get_groups(module, zammad_url, api_user, api_secret, api_token)
+        ticket_states, status_code = get_ticket_states(module, zammad_url, api_user, api_secret, api_token)
+        priorities, status_code = get_priorities(module, zammad_url, api_user, api_secret, api_token)
 
         state = module.params["state"]
         if state == "present" and module.params["ticket_id"]:
             validate_params(module, ["ticket_id"])
-            ticket_data, status_code = get_ticket(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
-            ticket_articles, status_code = get_ticket_articles(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
+            ticket_data, status_code = get_ticket(module, zammad_url, api_user, api_secret, api_token, module.params["ticket_id"])
+            ticket_articles, status_code = get_ticket_articles(module, zammad_url, api_user, api_secret, api_token, module.params["ticket_id"])
 
             current_ticket_data = {
                 "owner": get_owner_name(ticket_data, users),
@@ -417,6 +429,7 @@ def run_module():
                     zammad_url,
                     api_user,
                     api_secret,
+                    api_token,
                     module.params["ticket_id"],
                     get_owner_id(module.params["owner"], users),
                     module.params["customer"],
@@ -448,6 +461,7 @@ def run_module():
                 zammad_url,
                 api_user,
                 api_secret,
+                api_token,
                 get_owner_id(module.params["owner"], users),
                 module.params["customer"],
                 module.params["title"],
@@ -467,14 +481,14 @@ def run_module():
 
         elif state == "absent":
             validate_params(module, ["ticket_id"])
-            ticket_data, status_code = get_ticket(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
+            ticket_data, status_code = get_ticket(module, zammad_url, api_user, api_secret, api_token, module.params["ticket_id"])
 
             current_ticket_data = {"ticket_state": get_ticket_state_name(ticket_data, ticket_states)}
 
             ticket_data = {"ticket_state": module.params["ticket_state"]}
 
             if has_changes(current_ticket_data, ticket_data):
-                ticket_data, status_code = close_ticket(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
+                ticket_data, status_code = close_ticket(module, zammad_url, api_user, api_secret, api_token, module.params["ticket_id"])
                 result.update({
                     "changed": True,
                     "ticket_id": module.params["ticket_id"],
