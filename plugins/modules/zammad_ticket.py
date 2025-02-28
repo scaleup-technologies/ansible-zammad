@@ -172,8 +172,34 @@ message:
   sample: "Ticket created successfully."
 """
 
+#from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import make_request
+from ansible.module_utils.urls import fetch_url
+import json
+import base64
+
+def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_id=None, endpoint=None):
+    headers = {"Content-type": "application/json"}
+    auth = f"{api_user}:{api_secret}"
+    encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
+    headers["Authorization"] = f"Basic {encoded_auth}"
+    url = f"{zammad_url}/api/v1/tickets/{ticket_id}" if ticket_id else f"{zammad_url}/api/v1/{endpoint or 'tickets/'}"
+    data_json = json.dumps(data) if data else None
+    response, info = fetch_url(
+        module,
+        url,
+        method=method,
+        data=data_json,
+        headers=headers
+    )
+    if info["status"] >= 400:
+        module.fail_json(msg=f"API request failed: {info['msg']}", status_code=info["status"])
+    try:
+        result = json.load(response)
+    except json.JSONDecodeError:
+        module.fail_json(msg="Failed to parse JSON response")
+    return result, info["status"]
 
 
 def create_ticket(module, zammad_url, api_user, api_secret, owner, customer, title, group, subject, body, internal, ticket_state, priority):
@@ -191,7 +217,7 @@ def create_ticket(module, zammad_url, api_user, api_secret, owner, customer, tit
             "group": group,
             "state": ticket_state,
             "customer": customer,
-            "priority": priority
+            **({"priority": priority} if priority is not None else {})
         }.items() if value is not None}
     }
     return make_request(module, "POST", zammad_url, api_user, api_secret, data)
@@ -213,8 +239,7 @@ def update_ticket(module, zammad_url, api_user, api_secret, ticket_id, owner, cu
             "title": title,
             "group": group,
             "state": ticket_state,
-            "priority": priority
-        }.items() if value is not None}
+            **({"priority": priority} if priority is not None else {})        }.items() if value is not None}
     }
     return make_request(module, "PUT", zammad_url, api_user, api_secret, data, ticket_id)
 
@@ -300,8 +325,9 @@ def validate_params(module, required_params):
     zammad_access = module.params.get("zammad_access", {})
     if not all(zammad_access.get(param) for param in ["zammad_url", "api_user", "api_secret"]):
         module.fail_json(msg="Missing required zammad_access parameters: zammad_url, api_user, and/or api_secret.")
-    if not all(module.params[param] for param in required_params):
-        module.fail_json(msg="Missing required paramters: " + ", ".join(required_params))
+    for param in required_params:
+        if param != "priority" and not module.params.get(param):
+            module.fail_json(msg=f"Missing required parameter: {param}")
 
 
 def has_changes(current_ticket_data, ticket_data):
@@ -333,7 +359,7 @@ def run_module():
         body=dict(type="str", required=False, default=None),
         internal=dict(type="bool", required=False, default="false"),
         ticket_state=dict(type="str", required=False, default=None),
-        priority=dict(type="str", required=False, default="2 normal")
+        priority=dict(type="str", required=False, default=None)
     )
 
     module_args = {**module_args}
@@ -358,7 +384,6 @@ def run_module():
         state = module.params["state"]
         if state == "present" and module.params["ticket_id"]:
             validate_params(module, ["ticket_id"])
-
             ticket_data, status_code = get_ticket(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
             ticket_articles, status_code = get_ticket_articles(module, zammad_url, api_user, api_secret, module.params["ticket_id"])
 
