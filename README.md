@@ -1,6 +1,6 @@
 # Scaleuptechnologies Zammad_api Collection
 
-This repository contains the `scaleuptechnologies.zammad_api` Ansible Collection.
+This repository contains the `scaleuptechnologies.zammad` Ansible Collection.
 
 <!--start requires_ansible-->
 <!--end requires_ansible-->
@@ -17,33 +17,33 @@ Some modules and plugins require external libraries. Please check the requiremen
 ## Using this collection
 
 ```bash
-    ansible-galaxy collection install scaleuptechnologies.zammad_api
+    ansible-galaxy collection install scaleuptechnologies.zammad
 ```
 
 You can also include it in a `requirements.yml` file and install it via `ansible-galaxy collection install -r requirements.yml` using the format:
 
 ```yaml
 collections:
-  - name: scaleuptechnologies.zammad_api
+  - name: scaleuptechnologies.zammad
 ```
 
 To upgrade the collection to the latest available version, run the following command:
 
 ```bash
-ansible-galaxy collection install scaleuptechnologies.zammad_api --upgrade
+ansible-galaxy collection install scaleuptechnologies.zammad --upgrade
 ```
 
-You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/scaleuptechnologies/zammad_api):
+You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax where `X.Y.Z` can be any [available version](https://galaxy.ansible.com/scaleuptechnologies/zammad):
 
 ```bash
-ansible-galaxy collection install scaleuptechnologies.zammad_api:==X.Y.Z
+ansible-galaxy collection install scaleuptechnologies.zammad:==X.Y.Z
 ```
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_guide/collections_using.html) for more details.
 
 ## Release notes
 
-See the [changelog](https://github.com/ansible-collections/scaleuptechnologies.zammad_api/tree/main/CHANGELOG.rst).
+See the [changelog](https://github.com/ansible-collections/scaleuptechnologies.zammad/tree/main/CHANGELOG.rst).
 
 ## Roadmap
 

@@ -4,10 +4,6 @@
 # GNU General Public License v3.0+ (see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-import json
-import base64
 
 __metaclass__ = type
 
@@ -26,27 +22,6 @@ author:
   - Melvin Ziemann (@cloucs)  <ziemann.melvin@gmail.com>
 
 options:
-  zammad_access:
-    description:
-      - Connection details for accessing the Zammad API.
-    type: dict
-    required: true
-    suboptions:
-      zammad_url:
-        description:
-          - The base URL for the Zammad instance (e.g., https://zammad.example.com).
-        type: str
-        required: true
-      api_user:
-        description:
-          - The Zammad API user with appropriate permissions.
-        type: str
-        required: true
-      api_secret:
-        description:
-          - The API secret or password for the specified user. This value is hidden in logs.
-        type: str
-        required: true
   ticket_id:
     description:
       - The ID of the Zammad ticket to be updated.
@@ -68,7 +43,8 @@ options:
     choices:
       - present
       - absent
-
+extends_documentation_fragment:
+  - scaleuptechnologies.zammad.zammad_access
 notes:
   - Ensure the API user has sufficient permissions to update tickets.
   - The Zammad instance must be reachable from the Ansible control node.
@@ -121,40 +97,21 @@ message:
   type: str
   sample: "Ticket successfully updated."
 """
+from ansible.module_utils.basic import AnsibleModule
+
+from ansible_collections.scaleuptechnologies.zammad.plugins.module_utils.http_request import (
+    make_request,
+    validate_zammad_access,
+)
 
 
-def make_request(module, method, zammad_url, api_user, api_secret, data, ticket_id=None, endpoint=None):
-    headers = {"Content-type": "application/json"}
-    auth = f"{api_user}:{api_secret}"
-    encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
-    headers["Authorization"] = f"Basic {encoded_auth}"
-    url = f"{zammad_url}/api/v1/tickets/{ticket_id}" if ticket_id else f"{zammad_url}/api/v1/{endpoint or 'tickets/'}"
-    data_json = json.dumps(data) if data else None
-    response, info = fetch_url(
-        module,
-        url,
-        method=method,
-        data=data_json,
-        headers=headers
-    )
-    if info["status"] >= 400:
-        module.fail_json(msg=f"API request failed: {info['msg']}", status_code=info["status"])
-    try:
-        result = json.load(response)
-    except json.JSONDecodeError:
-        module.fail_json(msg="Failed to parse JSON response")
-    return result, info["status"]
+def get_ticket(module, zammad_access, ticket_id):
+    return make_request(module, "GET", zammad_access, None, ticket_id, expand=True)
 
 
-def change_idoit_object(module, zammad_url, api_user, api_secret, ticket_id, object_ids):
-    data = {
-        "preferences": {
-            "idoit": {
-                "object_ids": object_ids
-            }
-        }
-    }
-    return make_request(module, "PUT", zammad_url, api_user, api_secret, data, ticket_id)
+def change_idoit_object(module, zammad_access, ticket_id, object_ids):
+    data = {"preferences": {"idoit": {"object_ids": object_ids}}}
+    return make_request(module, "PUT", zammad_access, data, ticket_id)
 
 
 def run_module():
@@ -164,9 +121,10 @@ def run_module():
             required=True,
             options=dict(
                 zammad_url=dict(type="str", required=True),
-                api_user=dict(type="str", required=True),
-                api_secret=dict(type="str", required=True, no_log=True),
-            )
+                api_user=dict(type="str", required=False),
+                api_secret=dict(type="str", required=False, no_log=True),
+                api_token=dict(type="str", required=False, no_log=True),
+            ),
         ),
         ticket_id=dict(type="int", required=True),
         object_ids=dict(type="list", elements="str", required=True),
@@ -180,23 +138,40 @@ def run_module():
         module.exit_json(**result)
 
     zammad_access = module.params["zammad_access"]
-    zammad_url = zammad_access["zammad_url"]
-    api_user = zammad_access["api_user"]
-    api_secret = zammad_access["api_secret"]
+    validate_zammad_access(module, zammad_access)
     state = module.params["state"]
     object_ids = module.params["object_ids"] if state == "present" else ["0"]
 
     try:
-        ticket_data, status_code = change_idoit_object(
-            module,
-            zammad_url,
-            api_user,
-            api_secret,
-            module.params["ticket_id"],
-            object_ids,
-        )
+        ticket_data, status_code = get_ticket(module, zammad_access, module.params["ticket_id"])
+        if status_code != 200:
+            module.fail_json(msg="Failed to retrieve ticket data", status_code=status_code)
+        old_object_ids = ticket_data["preferences"]["idoit"]["object_ids"]
+        if state == "present":
+            new_object_ids = list(set(old_object_ids + object_ids))
+        else:
+            new_object_ids = list(set(old_object_ids) - set(object_ids))
+        if set(old_object_ids) != set(new_object_ids):
+            ticket_data, status_code = change_idoit_object(
+                module,
+                zammad_access,
+                module.params["ticket_id"],
+                object_ids,
+            )
 
-        result.update(changed=True, ticket_id=module.params["ticket_id"], status_code=status_code, message="Success")
+            result.update(
+                changed=True,
+                ticket_id=module.params["ticket_id"],
+                status_code=status_code,
+                message="Success",
+            )
+        else:
+            result.update(
+                changed=False,
+                ticket_id=module.params["ticket_id"],
+                status_code=status_code,
+                message="Success",
+            )
         module.exit_json(**result)
 
     except ValueError as e:

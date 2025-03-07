@@ -1,5 +1,5 @@
 ---
-name: Release scaleuptechnologies.zammad_api
+name: Release scaleuptechnologies.zammad
 
 on: # yamllint disable-line rule:truthy
   release:
