@@ -226,7 +226,7 @@ def create_article(
         "content_type": content_type,
         "sender": sender,
     }
-    return make_request(module, "POST", zammad_access, data, ticket_id, endpoint="ticket_articles")
+    return make_request(module, "POST", zammad_access, data, endpoint="ticket_articles")
 
 
 def get_ticket(module, zammad_access, ticket_id):
@@ -320,17 +320,17 @@ def run_module():
             article_changes = False
             new_ticket_data = {}
             for key in ticket_keys:
-                if key in module.params:
+                if key in module.params and module.params[key] is not None:
                     if key in module.params.keys():
                         new_value = module.params[key]
                     else:
                         new_value = module.params["custom_fields"][key]
-                    if new_value != ticket_data[key]:
-                        changes = True
+                    if key not in ticket_data or new_value != ticket_data[key]:
+                        ticket_changes = True
                         new_ticket_data[key] = new_value
             # We create a new article if the subject or body has changed
             for key in ["subject", "body"]:
-                if key in module.params:
+                if key in module.params and module.params[key] is not None:
                     new_value = module.params[key]
                     if new_value != get_last_article_data(ticket_articles, key):
                         article_changes = True

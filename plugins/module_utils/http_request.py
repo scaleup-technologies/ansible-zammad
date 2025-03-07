@@ -10,7 +10,9 @@ import base64
 __metaclass__ = type
 
 
-def make_request(module, method, zammad_access, data, ticket_id=None, endpoint=None, expand=False):
+def make_request(
+    module, method, zammad_access, data, ticket_id=None, endpoint="tickets", expand=False
+):
     zammad_url = zammad_access["zammad_url"]
     api_user = zammad_access.get("api_user")
     api_secret = zammad_access.get("api_secret")
@@ -24,11 +26,11 @@ def make_request(module, method, zammad_access, data, ticket_id=None, endpoint=N
         encoded_auth = base64.b64encode(auth.encode("utf-8")).decode("utf-8")
         headers["Authorization"] = f"Basic {encoded_auth}"
 
-    url = (
-        f"{zammad_url}/api/v1/tickets/{ticket_id}"
-        if ticket_id
-        else f"{zammad_url}/api/v1/{endpoint or 'tickets/'}"
-    )
+    if ticket_id is not None:
+        url = f"{zammad_url}/api/v1/{endpoint}/{ticket_id}"
+    else:
+        url = f"{zammad_url}/api/v1/{endpoint}"
+
     if expand:
         url = f"{url}?expand=true"
     data_json = json.dumps(data) if data else None
