@@ -146,7 +146,9 @@ def run_module():
         ticket_data, status_code = get_ticket(module, zammad_access, module.params["ticket_id"])
         if status_code != 200:
             module.fail_json(msg="Failed to retrieve ticket data", status_code=status_code)
-        old_object_ids = ticket_data["preferences"]["idoit"]["object_ids"]
+        old_object_ids = []
+        if "preferences" in ticket_data and "idoit" in ticket_data["preferences"]:
+            old_object_ids = ticket_data["preferences"]["idoit"]["object_ids"]
         if state == "present":
             new_object_ids = list(set(old_object_ids + object_ids))
         else:
