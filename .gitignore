@@ -165,4 +165,4 @@ FILES.json
 MANIFEST.json
 ansible.cfg
 testmodule.yml
-tests/
+
