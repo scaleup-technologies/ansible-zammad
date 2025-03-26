@@ -18,7 +18,7 @@
       register: ticket_rtn
 
     - name: Print Ticket ID
-      ansible.buildin.debug:
+      ansible.builtin.debug:
         msg: "Ticket ID: {{ ticket_rtn.ticket_id }}"
 
     - name: Change Ticket priority
