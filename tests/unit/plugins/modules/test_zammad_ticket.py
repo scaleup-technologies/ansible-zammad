@@ -218,7 +218,7 @@ def test_update_ticket_piority():
 
         # Überprüfen der übergebenen Parameter beim ersten Aufruf
         first_call_args = mock_fetch_url.call_args_list[0]
-        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42"
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42?expand=true"
         assert first_call_args[1]["method"] == "GET"
 
         secnd_call_args = mock_fetch_url.call_args_list[1]
@@ -276,7 +276,7 @@ def test_equal_ticket_piority():
 
         # Überprüfen der übergebenen Parameter beim ersten Aufruf
         first_call_args = mock_fetch_url.call_args_list[0]
-        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42"
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42?expand=true"
         assert first_call_args[1]["method"] == "GET"
 
         secnd_call_args = mock_fetch_url.call_args_list[1]
@@ -328,7 +328,7 @@ def test_update_ticket_new_article_and_priority():
 
         # Überprüfen der übergebenen Parameter beim ersten Aufruf
         first_call_args = mock_fetch_url.call_args_list[0]
-        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42"
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42?expand=true"
         assert first_call_args[1]["method"] == "GET"
 
         secnd_call_args = mock_fetch_url.call_args_list[1]
@@ -395,7 +395,7 @@ def test_update_ticket_new_article():
 
         # Überprüfen der übergebenen Parameter beim ersten Aufruf
         first_call_args = mock_fetch_url.call_args_list[0]
-        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42"
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets/42?expand=true"
         assert first_call_args[1]["method"] == "GET"
 
         secnd_call_args = mock_fetch_url.call_args_list[1]

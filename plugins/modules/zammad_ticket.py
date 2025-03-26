@@ -230,7 +230,7 @@ def create_article(
 
 
 def get_ticket(module, zammad_access, ticket_id):
-    return make_request(module, "GET", zammad_access, {}, ticket_id)
+    return make_request(module, "GET", zammad_access, {}, ticket_id, expand=True)
 
 
 def get_ticket_articles(module, zammad_access, ticket_id):
