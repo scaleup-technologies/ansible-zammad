@@ -193,7 +193,7 @@ message:
   sample: "Ticket created successfully."
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.scaleuptechnologies.zammad_api.plugins.module_utils.http_request import (
+from ansible_collections.scaleuptechnologies.zammad.plugins.module_utils.http_request import (
     make_request,
     validate_zammad_access,
 )
