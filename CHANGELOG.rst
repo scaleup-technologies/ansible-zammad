@@ -1,6 +1,27 @@
-This should be updated by antsibull-changelog. Do not edit this manually!
+===================================================
+Scaleuptechnologies Zammad Collection Release Notes
+===================================================
 
-See https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst for
-information on how to use antsibull-changelog.
+.. contents:: Topics
 
-Check out ``changelogs/config.yaml`` for its configuration. You need to change at least the ``title`` field in there.
+v2.0.0
+======
+
+Major Changes
+-------------
+
+- Added support for api token authentication.
+- Added support for custom objects in Zammad.
+- Added support for multiple object_ids.
+- Renamed the collection from zammad_api to just zammad.
+- zammad_ticket_idoit - Updates a Zammad ticket with i-doit object IDs.
+
+Minor Changes
+-------------
+
+- Set default ticket priority to normal.
+
+Documentation Changes
+---------------------
+
+- Updated documentation according to new features and changes.
