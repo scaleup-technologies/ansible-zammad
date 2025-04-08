@@ -1,5 +1,5 @@
 ---
-name: "CI"
+name: "tests"
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -22,6 +22,35 @@ jobs:
     uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@main
   sanity:
     uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@main
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs:
+      - build-import
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core pytest-xdist coverage==7.6.1
+      - name: Run ansible-test units
+        run: |
+          DEST_DIR="${HOME}/tmp/ansible_collections/scaleuptechnologies/zammad"
+          mkdir -p "${DEST_DIR}"
+          rsync -v --delete -r ./* "${DEST_DIR}/"
+          cd "${DEST_DIR}" || exit
+          ansible-test units --coverage -vv --python 3.12
+      - name: Generate coverage reports
+        run: |
+          cd "${HOME}/tmp/ansible_collections/scaleuptechnologies/zammad"
+          ansible-test coverage html
+          ansible-test coverage report
   all_green:
     if: ${{ always() }}
     needs:
@@ -29,6 +58,7 @@ jobs:
       - build-import
       - sanity
       - ansible-lint
+      - unit-tests
     runs-on: ubuntu-latest
     steps:
       - run: >-
@@ -36,5 +66,6 @@ jobs:
           set([
           '${{ needs.changelog.result }}',
           '${{ needs.sanity.result }}',
-          '${{ needs.ansible-lint.result }}'
+          '${{ needs.ansible-lint.result }}',
+          '${{ needs.unit-tests.result }}'
           ])"
