@@ -3,21 +3,21 @@ releases:
   2.0.0:
     changes:
       doc_changes:
-      - Updated documentation according to new features and changes.
+        - Updated documentation according to new features and changes.
       major_changes:
-      - Added support for api token authentication.
-      - Added support for custom objects in Zammad.
-      - Added support for multiple object_ids.
-      - Renamed the collection from zammad_api to just zammad.
-      - zammad_ticket_idoit - Updates a Zammad ticket with i-doit object IDs.
+        - Added support for api token authentication.
+        - Added support for custom objects in Zammad.
+        - Added support for multiple object_ids.
+        - Renamed the collection from zammad_api to just zammad.
+        - zammad_ticket_idoit - Updates a Zammad ticket with i-doit object IDs.
       minor_changes:
-      - Set default ticket priority to normal.
+        - Set default ticket priority to normal.
     fragments:
-    - 3-add-idoit-integration.yaml
-    - api_token.yaml
-    - custom_objects.yaml
-    - default-ticket-priority.yaml
-    - object_ids.yaml
-    - rename_collection.yaml
-    - update-documentation.yaml
+      - 3-add-idoit-integration.yaml
+      - api_token.yaml
+      - custom_objects.yaml
+      - default-ticket-priority.yaml
+      - object_ids.yaml
+      - rename_collection.yaml
+      - update-documentation.yaml
     release_date: '2025-04-08'
