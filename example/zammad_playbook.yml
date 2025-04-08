@@ -1,0 +1,49 @@
+- name: Test Zammad
+  hosts: localhost
+  vars:
+    zammad_access:
+      zammad_url: http://127.0.0.1:8080
+      api_token: eUvkVwCng9xQAlOE9MlS6epvnGFUdKpIrQ_ABGNAXuTtSoO5lB1DAkioZrVxy7r5
+  tasks:
+    - name: Create a Ticket
+      scaleuptechnologies.zammad.zammad_ticket:
+        zammad_access: "{{ zammad_access }}"
+        title: "Internet Outage"
+        group: "Operations"
+        customer: "customer@example.com"
+        subject: "Internet is down"
+        body: "The internet is not working since this morning."
+        internal: false
+        state: "open"
+      register: ticket_rtn
+
+    - name: Print Ticket ID
+      ansible.builtin.debug:
+        msg: "Ticket ID: {{ ticket_rtn.ticket_id }}"
+
+    - name: Change Ticket priority
+      scaleuptechnologies.zammad.zammad_ticket:
+        zammad_access: "{{ zammad_access }}"
+        ticket_id: "{{ ticket_rtn.ticket_id }}"
+        priority: "3 high"
+
+    - name: Add Article to Ticket
+      scaleuptechnologies.zammad.zammad_ticket:
+        zammad_access: "{{ zammad_access }}"
+        ticket_id: "{{ ticket_rtn.ticket_id }}"
+        subject: "Internet is working agains"
+        body: "The internet is working again."
+
+    - name: Assing Idoit Object 42
+      scaleuptechnologies.zammad.zammad_ticket_idoit:
+        zammad_access: "{{ zammad_access }}"
+        ticket_id: "{{ ticket_rtn.ticket_id }}"
+        object_ids:
+          - 42
+        state: present
+
+    - name: Close Ticket
+      scaleuptechnologies.zammad.zammad_ticket:
+        zammad_access: "{{ zammad_access }}"
+        ticket_id: "{{ ticket_rtn.ticket_id }}"
+        state: closed

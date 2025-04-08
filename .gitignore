@@ -161,3 +161,8 @@ cython_debug/
 #.idea/
 
 *args.json
+FILES.json
+MANIFEST.json
+ansible.cfg
+testmodule.yml
+

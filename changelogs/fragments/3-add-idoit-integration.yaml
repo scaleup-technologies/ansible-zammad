@@ -1,0 +1,2 @@
+major_changes:
+  - zammad_ticket_idoit - Updates a Zammad ticket with i-doit object IDs.

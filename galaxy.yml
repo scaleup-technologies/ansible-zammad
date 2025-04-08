@@ -4,7 +4,7 @@
 # See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
 
 namespace: "scaleuptechnologies"
-name: "zammad_api"
+name: "zammad"
 version: 1.0.0
 readme: README.md
 authors:
