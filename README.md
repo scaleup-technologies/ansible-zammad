@@ -1,4 +1,4 @@
-# Scaleuptechnologies Zammad_api Collection
+# Scaleuptechnologies Zammad Collection
 
 This repository contains the `scaleuptechnologies.zammad` Ansible Collection.
 
