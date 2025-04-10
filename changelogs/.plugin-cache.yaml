@@ -1,0 +1,29 @@
+objects:
+  role: {}
+plugins:
+  become: {}
+  cache: {}
+  callback: {}
+  cliconf: {}
+  connection: {}
+  filter: {}
+  httpapi: {}
+  inventory: {}
+  lookup: {}
+  module:
+    zammad_ticket:
+      description: Create, update, or close a Zammad ticket via the API.
+      name: zammad_ticket
+      namespace: ''
+      version_added: 1.0.0
+    zammad_ticket_idoit:
+      description: Updates a Zammad ticket with i-doit object IDs.
+      name: zammad_ticket_idoit
+      namespace: ''
+      version_added: null
+  netconf: {}
+  shell: {}
+  strategy: {}
+  test: {}
+  vars: {}
+version: 2.0.0
