@@ -13,6 +13,7 @@ Major Changes
 - Added support for api token authentication.
 - Added support for custom objects in Zammad.
 - Added support for multiple object_ids.
+- Adopted Test-Driven Development as part of our engineering workflow.
 - Renamed the collection from zammad_api to just zammad.
 - zammad_ticket_idoit - Updates a Zammad ticket with i-doit object IDs.
 
