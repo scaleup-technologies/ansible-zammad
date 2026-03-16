@@ -415,7 +415,7 @@ def run_module():
             result.update(
                 {
                     "changed": True,
-                    "ticket_id": ticket_id
+                    "ticket_id": ticket_id,
                     "status_code": status_code,
                     "message": "Ticket created successfully.",
                 }
