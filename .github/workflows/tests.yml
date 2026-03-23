@@ -38,7 +38,7 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ansible-core pytest-xdist coverage==7.6.1
+          pip install ansible-core pytest-xdist coverage==7.10.7
       - name: Run ansible-test units
         run: |
           DEST_DIR="${HOME}/tmp/ansible_collections/scaleuptechnologies/zammad"
