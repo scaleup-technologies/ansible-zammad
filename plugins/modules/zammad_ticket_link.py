@@ -22,13 +22,20 @@ version_added: "2.1.0"
 
 description:
   - This module allows you to link or unlink two Zammad tickets using the Zammad API.
-  - The source ticket is identified by its ticket number, the target by its internal ID.
+  - Provide either C(source_ticket_id) or C(source_ticket_number) to identify the source ticket.
 
 options:
+  source_ticket_id:
+    description:
+      - The internal ID of the source ticket (e.g., 4468).
+      - Mutually exclusive with C(source_ticket_number).
+    required: false
+    type: int
   source_ticket_number:
     description:
-      - The ticket number of the source ticket (e.g., '42001').
-    required: true
+      - The display number of the source ticket (e.g., '42001').
+      - Mutually exclusive with C(source_ticket_id).
+    required: false
     type: str
   target_ticket_id:
     description:
@@ -141,6 +148,11 @@ def find_link(links_data, source_ticket_number, link_type):
     return False, source_id
 
 
+def get_ticket_number(module, zammad_access, ticket_id):
+    ticket_data, dummy = make_request(module, "GET", zammad_access, None, ticket_id=ticket_id)
+    return ticket_data["number"]
+
+
 def add_link(module, zammad_access, source_ticket_number, target_ticket_id, link_type):
     data = {
         "link_type": link_type,
@@ -177,7 +189,8 @@ def run_module():
                 api_token=dict(type="str", required=False, no_log=True),
             ),
         ),
-        source_ticket_number=dict(type="str", required=True),
+        source_ticket_id=dict(type="int", required=False),
+        source_ticket_number=dict(type="str", required=False),
         target_ticket_id=dict(type="int", required=True),
         link_type=dict(
             type="str",
@@ -189,7 +202,12 @@ def run_module():
     )
 
     result = dict(changed=False, status_code=0, message="")
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=module_args,
+        supports_check_mode=True,
+        mutually_exclusive=[["source_ticket_id", "source_ticket_number"]],
+        required_one_of=[["source_ticket_id", "source_ticket_number"]],
+    )
 
     if module.check_mode:
         module.exit_json(**result)
@@ -198,11 +216,15 @@ def run_module():
     validate_zammad_access(module, zammad_access)
 
     source_ticket_number = module.params["source_ticket_number"]
+    source_ticket_id = module.params["source_ticket_id"]
     target_ticket_id = module.params["target_ticket_id"]
     link_type = module.params["link_type"]
     state = module.params["state"]
 
     try:
+        if source_ticket_id and not source_ticket_number:
+            source_ticket_number = get_ticket_number(module, zammad_access, source_ticket_id)
+
         links_data, status_code = get_links(module, zammad_access, target_ticket_id)
         already_linked, source_id = find_link(links_data, source_ticket_number, link_type)
 

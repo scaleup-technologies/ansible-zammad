@@ -219,3 +219,54 @@ def test_add_link_default_link_type():
         assert mock_fetch_url.call_count == 2
         post_call = mock_fetch_url.call_args_list[1]
         assert json.loads(post_call[1]["data"])["link_type"] == "normal"
+
+
+def test_add_link_with_source_ticket_id():
+    """source_ticket_id triggers a GET /api/v1/tickets/{id} to resolve the number first."""
+    fake_ticket = MagicMock()
+    fake_ticket.read.return_value = json.dumps({"id": 41, "number": "42001"}).encode()
+    fake_get_links = MagicMock()
+    fake_get_links.read.return_value = LINKS_RESPONSE_EMPTY
+    fake_post = MagicMock()
+    fake_post.read.return_value = b"{}"
+
+    with patch(
+        FETCH_URL_METHOD,
+        side_effect=[
+            (fake_ticket, {"status": 200, "msg": "OK"}),
+            (fake_get_links, {"status": 200, "msg": "OK"}),
+            (fake_post, {"status": 201, "msg": "Created"}),
+        ],
+    ) as mock_fetch_url:
+        set_module_args(
+            {
+                "zammad_access": {
+                    "zammad_url": "https://example.com",
+                    "api_token": "my_api_token",
+                },
+                "source_ticket_id": 41,
+                "target_ticket_id": 5,
+                "link_type": "normal",
+                "state": "present",
+            }
+        )
+        try:
+            zammad_ticket_link.main()
+        except AnsibleExitJson as e:
+            result = e.args[0]
+            assert result["changed"] is True
+        assert mock_fetch_url.call_count == 3
+
+        # 1. GET ticket to resolve number
+        ticket_call = mock_fetch_url.call_args_list[0]
+        assert ticket_call[0][1] == "https://example.com/api/v1/tickets/41"
+        assert ticket_call[1]["method"] == "GET"
+
+        # 2. GET links
+        links_call = mock_fetch_url.call_args_list[1]
+        assert links_call[0][1] == "https://example.com/api/v1/links?link_object=Ticket&link_object_value=5"
+
+        # 3. POST links/add uses the resolved number
+        post_call = mock_fetch_url.call_args_list[2]
+        assert post_call[0][1] == "https://example.com/api/v1/links/add"
+        assert json.loads(post_call[1]["data"])["link_object_source_number"] == "42001"
