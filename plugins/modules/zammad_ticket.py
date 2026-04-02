@@ -321,13 +321,14 @@ def run_module():
             new_ticket_data = {}
             for key in ticket_keys:
                 if key in module.params and module.params[key] is not None:
-                    if key in module.params.keys():
-                        new_value = module.params[key]
-                    else:
-                        new_value = module.params["custom_fields"][key]
-                    if key not in ticket_data or new_value != ticket_data[key]:
-                        ticket_changes = True
-                        new_ticket_data[key] = new_value
+                    new_value = module.params[key]
+                elif key in module.params.get("custom_fields", {}):
+                    new_value = module.params["custom_fields"][key]
+                else:
+                    continue
+                if key not in ticket_data or new_value != ticket_data[key]:
+                    ticket_changes = True
+                    new_ticket_data[key] = new_value
             # We create a new article if the subject or body has changed
             for key in ["subject", "body"]:
                 if key in module.params and module.params[key] is not None:
@@ -398,6 +399,8 @@ def run_module():
             for key in ticket_keys:
                 if key in module.params and module.params[key] is not None:
                     ticket_data[key] = module.params[key]
+                elif key in module.params.get("custom_fields", {}):
+                    ticket_data[key] = module.params["custom_fields"][key]
             ticket_data["article"] = {
                 "subject": module.params["subject"],
                 "body": module.params["body"],
