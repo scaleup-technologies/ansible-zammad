@@ -417,3 +417,113 @@ def test_update_ticket_new_article():
             "type": "note",
         }
         assert json.loads(third_call_args[1]["data"]) == expected_data
+
+
+def test_create_new_ticket_with_cc():
+    fake_response_1 = MagicMock()
+    fake_response_1.read.return_value = b'{"id": 99}'
+    fake_info_1 = {"status": 200, "msg": "OK"}
+
+    with patch(
+        FETCH_URL_METHOD,
+        side_effect=[(fake_response_1, fake_info_1)],
+    ) as mock_fetch_url:
+        set_module_args(
+            {
+                "zammad_access": {
+                    "zammad_url": "https://example.com",
+                    "api_user": "user",
+                    "api_secret": "secret",
+                },
+                "title": "Internet Outage",
+                "group": "Support",
+                "customer": "customer@example.com",
+                "subject": "Internet is down",
+                "body": "The internet is not working since this morning.",
+                "internal": "false",
+                "state": "open",
+                "cc": "a@example.com, b@example.com",
+            }
+        )
+        try:
+            zammad_ticket.main()
+        except AnsibleExitJson as e:
+            result = e.args[0]
+            assert result["changed"] is True
+        assert mock_fetch_url.call_count == 1
+
+        first_call_args = mock_fetch_url.call_args_list[0]
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets"
+        assert first_call_args[1]["method"] == "POST"
+        expected_data = {
+            "customer": "customer@example.com",
+            "title": "Internet Outage",
+            "group": "Support",
+            "state": "open",
+            "article": {
+                "subject": "Internet is down",
+                "body": "The internet is not working since this morning.",
+                "type": "note",
+                "internal": "false",
+                "content_type": "text/plain",
+                "sender": "Agent",
+                "cc": "a@example.com, b@example.com",
+            },
+        }
+        assert json.loads(first_call_args[1]["data"]) == expected_data
+
+
+def test_update_ticket_new_article_with_cc():
+    fake_response_1 = MagicMock()
+    fake_response_1.read.return_value = read_fixture_file("ticket42.json")
+    fake_info_1 = {"status": 200, "msg": "OK"}
+
+    fake_response_2 = MagicMock()
+    fake_response_2.read.return_value = read_fixture_file("articles42.json")
+    fake_info_2 = {"status": 200, "msg": "OK"}
+
+    fake_response_3 = MagicMock()
+    fake_response_3.read.return_value = '{"id": 43}'
+    fake_info_3 = {"status": 201, "msg": "OK"}
+
+    with patch(
+        FETCH_URL_METHOD,
+        side_effect=[
+            (fake_response_1, fake_info_1),
+            (fake_response_2, fake_info_2),
+            (fake_response_3, fake_info_3),
+        ],
+    ) as mock_fetch_url:
+        set_module_args(
+            {
+                "zammad_access": {
+                    "zammad_url": "https://example.com",
+                    "api_token": "my_api_token",
+                },
+                "ticket_id": 42,
+                "subject": "Internet is down",
+                "body": "The internet is not working since this morning.",
+                "cc": "a@example.com, b@example.com",
+            }
+        )
+        try:
+            zammad_ticket.main()
+        except AnsibleExitJson as e:
+            result = e.args[0]
+            assert result["changed"] is True
+        assert mock_fetch_url.call_count == 3
+
+        third_call_args = mock_fetch_url.call_args_list[2]
+        assert third_call_args[0][1] == "https://example.com/api/v1/ticket_articles"
+        assert third_call_args[1]["method"] == "POST"
+        expected_data = {
+            "body": "The internet is not working since this morning.",
+            "cc": "a@example.com, b@example.com",
+            "content_type": "text/plain",
+            "internal": "false",
+            "sender": "Agent",
+            "subject": "Internet is down",
+            "ticket_id": 42,
+            "type": "note",
+        }
+        assert json.loads(third_call_args[1]["data"]) == expected_data

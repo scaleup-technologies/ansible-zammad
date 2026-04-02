@@ -122,6 +122,11 @@ options:
     type: str
     default: 'text/plain'
     choices: ['text/html', 'text/plain']
+  cc:
+    description:
+      - Comma-separated list of CC recipients for the ticket's article (e.g., 'a@example.com, b@example.com').
+    required: false
+    type: str
   custom_fields:
     description:
       - Custom objects that can be passed to the Zammad API to extend the functionality.
@@ -216,6 +221,7 @@ def create_article(
     internal: bool,
     content_type: str,
     sender: str,
+    cc: str = None,
 ):
     data = {
         "ticket_id": ticket_id,
@@ -226,6 +232,8 @@ def create_article(
         "content_type": content_type,
         "sender": sender,
     }
+    if cc:
+        data["cc"] = cc
     return make_request(module, "POST", zammad_access, data, endpoint="ticket_articles")
 
 
@@ -285,6 +293,7 @@ def run_module():
         sender=dict(
             type="str", choices=["Agent", "Customer", "System"], required=False, default="Agent"
         ),
+        cc=dict(type="str", required=False),
     )
 
     module_args = {**module_args}
@@ -346,6 +355,8 @@ def run_module():
                     }
                     if module.params["sender"]:
                         new_ticket_data["article"]["sender"] = module.params["sender"]
+                    if module.params["cc"]:
+                        new_ticket_data["article"]["cc"] = module.params["cc"]
                 ticket_data, status_code = update_ticket(
                     module, zammad_access, module.params["ticket_id"], new_ticket_data
                 )
@@ -359,6 +370,7 @@ def run_module():
                     module.params["internal"],
                     module.params["content_type"],
                     module.params["sender"],
+                    module.params["cc"],
                 )
             if ticket_changes:
                 result.update(
@@ -407,6 +419,8 @@ def run_module():
             }
             if module.params["sender"]:
                 ticket_data["article"]["sender"] = module.params["sender"]
+            if module.params["cc"]:
+                ticket_data["article"]["cc"] = module.params["cc"]
             ticket_data, status_code = create_ticket(module, zammad_access, ticket_data)
             result.update(
                 {
