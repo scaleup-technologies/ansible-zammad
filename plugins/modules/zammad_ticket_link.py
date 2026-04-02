@@ -22,7 +22,7 @@ version_added: "2.1.0"
 
 description:
   - This module allows you to link or unlink two Zammad tickets using the Zammad API.
-  - Links are directional: the source ticket is identified by its ticket number, the target by its internal ID.
+  - The source ticket is identified by its ticket number, the target by its internal ID.
 
 options:
   source_ticket_number:
@@ -210,7 +210,7 @@ def run_module():
             if already_linked:
                 result.update(changed=False, status_code=status_code, message="Link already exists.")
             else:
-                _, status_code = add_link(
+                dummy, status_code = add_link(
                     module, zammad_access, source_ticket_number, target_ticket_id, link_type,
                 )
                 result.update(changed=True, status_code=status_code, message="Link created successfully.")
@@ -218,7 +218,7 @@ def run_module():
             if not already_linked:
                 result.update(changed=False, status_code=status_code, message="Link does not exist.")
             else:
-                _, status_code = remove_link(
+                dummy, status_code = remove_link(
                     module, zammad_access, source_id, target_ticket_id, link_type,
                 )
                 result.update(changed=True, status_code=status_code, message="Link removed successfully.")
