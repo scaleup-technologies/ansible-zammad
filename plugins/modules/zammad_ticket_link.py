@@ -119,12 +119,13 @@ def get_links(module, zammad_access, target_ticket_id):
     )
 
 
-def link_exists(links_data, source_ticket_number, link_type):
-    """Check if a link to source_ticket_number with the given link_type is present.
+def find_link(links_data, source_ticket_number, link_type):
+    """Return (exists, source_ticket_id) for the given source_ticket_number and link_type.
 
     The GET /api/v1/links response contains an assets.Ticket dict keyed by ticket ID,
-    where each entry has a "number" field. We match by ticket number, then verify
-    the link_type in the links array.
+    where each entry has a "number" field. We match by ticket number to get the internal
+    source ID, then verify the link_type in the links array.
+    The source ID is needed for DELETE /api/v1/links/remove (link_object_source_value).
     """
     ticket_assets = links_data.get("assets", {}).get("Ticket", {})
     source_id = None
@@ -133,11 +134,11 @@ def link_exists(links_data, source_ticket_number, link_type):
             source_id = int(ticket_id_str)
             break
     if source_id is None:
-        return False
+        return False, None
     for link in links_data.get("links", []):
         if link.get("link_type") == link_type and link.get("link_object_value") == source_id:
-            return True
-    return False
+            return True, source_id
+    return False, source_id
 
 
 def add_link(module, zammad_access, source_ticket_number, target_ticket_id, link_type):
@@ -151,11 +152,13 @@ def add_link(module, zammad_access, source_ticket_number, target_ticket_id, link
     return make_request(module, "POST", zammad_access, data, endpoint="links/add")
 
 
-def remove_link(module, zammad_access, source_ticket_number, target_ticket_id, link_type):
+def remove_link(module, zammad_access, source_ticket_id, target_ticket_id, link_type):
+    # DELETE requires the source ticket's internal ID (link_object_source_value),
+    # not its display number. link_object_source_number is only accepted by links/add.
     data = {
         "link_type": link_type,
         "link_object_source": "Ticket",
-        "link_object_source_number": str(source_ticket_number),
+        "link_object_source_value": int(source_ticket_id),
         "link_object_target": "Ticket",
         "link_object_target_value": int(target_ticket_id),
     }
@@ -201,7 +204,7 @@ def run_module():
 
     try:
         links_data, status_code = get_links(module, zammad_access, target_ticket_id)
-        already_linked = link_exists(links_data, source_ticket_number, link_type)
+        already_linked, source_id = find_link(links_data, source_ticket_number, link_type)
 
         if state == "present":
             if already_linked:
@@ -216,7 +219,7 @@ def run_module():
                 result.update(changed=False, status_code=status_code, message="Link does not exist.")
             else:
                 _, status_code = remove_link(
-                    module, zammad_access, source_ticket_number, target_ticket_id, link_type,
+                    module, zammad_access, source_id, target_ticket_id, link_type,
                 )
                 result.update(changed=True, status_code=status_code, message="Link removed successfully.")
 

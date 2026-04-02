@@ -169,10 +169,11 @@ def test_remove_link_exists():
         delete_call = mock_fetch_url.call_args_list[1]
         assert delete_call[0][1] == "https://example.com/api/v1/links/remove"
         assert delete_call[1]["method"] == "DELETE"
+        # DELETE needs link_object_source_value (internal ID=41), not source_number
         assert json.loads(delete_call[1]["data"]) == {
             "link_type": "normal",
             "link_object_source": "Ticket",
-            "link_object_source_number": "42001",
+            "link_object_source_value": 41,
             "link_object_target": "Ticket",
             "link_object_target_value": 5,
         }
