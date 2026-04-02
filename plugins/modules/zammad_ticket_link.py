@@ -57,8 +57,7 @@ options:
 extends_documentation_fragment:
   - scaleuptechnologies.zammad.zammad_access
 notes:
-  - This module is not idempotent for C(state=present). If the link already exists, it will be created again and C(changed) will be C(true).
-  - For C(state=absent), if the link does not exist, the API call may fail depending on the Zammad version.
+  - The module checks existing links before adding or removing, so it is fully idempotent.
 """
 
 EXAMPLES = r"""
@@ -107,6 +106,38 @@ from ansible_collections.scaleuptechnologies.zammad.plugins.module_utils.http_re
     make_request,
     validate_zammad_access,
 )
+
+
+def get_links(module, zammad_access, target_ticket_id):
+    return make_request(
+        module,
+        "GET",
+        zammad_access,
+        None,
+        endpoint="links",
+        query_params={"link_object": "Ticket", "link_object_value": target_ticket_id},
+    )
+
+
+def link_exists(links_data, source_ticket_number, link_type):
+    """Check if a link to source_ticket_number with the given link_type is present.
+
+    The GET /api/v1/links response contains an assets.Ticket dict keyed by ticket ID,
+    where each entry has a "number" field. We match by ticket number, then verify
+    the link_type in the links array.
+    """
+    ticket_assets = links_data.get("assets", {}).get("Ticket", {})
+    source_id = None
+    for ticket_id_str, ticket in ticket_assets.items():
+        if str(ticket.get("number")) == str(source_ticket_number):
+            source_id = int(ticket_id_str)
+            break
+    if source_id is None:
+        return False
+    for link in links_data.get("links", []):
+        if link.get("link_type") == link_type and link.get("link_object_value") == source_id:
+            return True
+    return False
 
 
 def add_link(module, zammad_access, source_ticket_number, target_ticket_id, link_type):
@@ -169,16 +200,25 @@ def run_module():
     state = module.params["state"]
 
     try:
+        links_data, status_code = get_links(module, zammad_access, target_ticket_id)
+        already_linked = link_exists(links_data, source_ticket_number, link_type)
+
         if state == "present":
-            _, status_code = add_link(
-                module, zammad_access, source_ticket_number, target_ticket_id, link_type,
-            )
-            result.update(changed=True, status_code=status_code, message="Link created successfully.")
+            if already_linked:
+                result.update(changed=False, status_code=status_code, message="Link already exists.")
+            else:
+                _, status_code = add_link(
+                    module, zammad_access, source_ticket_number, target_ticket_id, link_type,
+                )
+                result.update(changed=True, status_code=status_code, message="Link created successfully.")
         else:
-            _, status_code = remove_link(
-                module, zammad_access, source_ticket_number, target_ticket_id, link_type,
-            )
-            result.update(changed=True, status_code=status_code, message="Link removed successfully.")
+            if not already_linked:
+                result.update(changed=False, status_code=status_code, message="Link does not exist.")
+            else:
+                _, status_code = remove_link(
+                    module, zammad_access, source_ticket_number, target_ticket_id, link_type,
+                )
+                result.update(changed=True, status_code=status_code, message="Link removed successfully.")
 
         module.exit_json(**result)
 

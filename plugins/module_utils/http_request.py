@@ -11,7 +11,14 @@ __metaclass__ = type
 
 
 def make_request(
-    module, method, zammad_access, data, ticket_id=None, endpoint="tickets", expand=False
+    module,
+    method,
+    zammad_access,
+    data,
+    ticket_id=None,
+    endpoint="tickets",
+    expand=False,
+    query_params=None,
 ):
     zammad_url = zammad_access["zammad_url"]
     api_user = zammad_access.get("api_user")
@@ -31,8 +38,13 @@ def make_request(
     else:
         url = f"{zammad_url}/api/v1/{endpoint}"
 
+    params = {}
     if expand:
-        url = f"{url}?expand=true"
+        params["expand"] = "true"
+    if query_params:
+        params.update(query_params)
+    if params:
+        url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
     data_json = json.dumps(data) if data else None
     response, info = fetch_url(module, url, method=method, data=data_json, headers=headers)
     if info["status"] >= 400:
