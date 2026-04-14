@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - zammad_ticket - fix custom_fields being silently ignored when creating a ticket (https://github.com/scaleup-technologies/ansible-zammad/pull/11).

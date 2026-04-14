@@ -354,6 +354,50 @@ def test_update_ticket_new_article_and_priority():
         assert json.loads(third_call_args[1]["data"]) == expected_data
 
 
+def test_create_new_ticket_with_custom_fields():
+    fake_response_1 = MagicMock()
+    fake_response_1.read.return_value = b'{"id": 43}'
+    fake_info_1 = {"status": 200, "msg": "OK"}
+
+    with patch(
+        FETCH_URL_METHOD,
+        side_effect=[(fake_response_1, fake_info_1)],
+    ) as mock_fetch_url:
+        set_module_args(
+            {
+                "zammad_access": {
+                    "zammad_url": "https://example.com",
+                    "api_user": "user",
+                    "api_secret": "secret",
+                },
+                "title": "Internet Outage",
+                "group": "Support",
+                "customer": "customer@example.com",
+                "subject": "Internet is down",
+                "body": "The internet is not working since this morning.",
+                "internal": "false",
+                "state": "open",
+                "custom_fields": {
+                    "contract_number": "C-12345",
+                    "affected_site": "Berlin",
+                },
+            }
+        )
+        try:
+            zammad_ticket.main()
+        except AnsibleExitJson as e:
+            result = e.args[0]
+            assert result["changed"] is True
+        assert mock_fetch_url.call_count == 1
+
+        first_call_args = mock_fetch_url.call_args_list[0]
+        assert first_call_args[0][1] == "https://example.com/api/v1/tickets"
+        assert first_call_args[1]["method"] == "POST"
+        body = json.loads(first_call_args[1]["data"])
+        assert body["contract_number"] == "C-12345"
+        assert body["affected_site"] == "Berlin"
+
+
 def test_update_ticket_new_article():
 
     fake_response_1 = MagicMock()
