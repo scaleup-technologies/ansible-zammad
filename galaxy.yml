@@ -5,7 +5,7 @@
 
 namespace: "scaleuptechnologies"
 name: "zammad"
-version: 1.0.0
+version: 2.1.0
 readme: README.md
 authors:
   - Melvin Ziemann (@cloucs) <ziemann.melvin@gmail.com>
