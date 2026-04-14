@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - new module ``zammad_ticket_link`` to add or remove links between two Zammad tickets
+    via ``POST /api/v1/links/add`` and ``DELETE /api/v1/links/remove``
+    (https://github.com/scaleup-technologies/ansible-zammad/pull/12).
