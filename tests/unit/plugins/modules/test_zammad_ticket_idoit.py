@@ -103,9 +103,9 @@ def test_module_key_does_not_exist_before():
 
         # Überprüfen der übergebenen Parameter beim zweiten Aufruf
         second_call_args = mock_fetch_url.call_args_list[1]
-        assert second_call_args[0][1] == "https://example.com/api/v1/tickets/1"
-        assert second_call_args[1]["method"] == "PUT"
-        assert second_call_args[1]["data"] == '{"preferences": {"idoit": {"object_ids": ["123"]}}}'
+        assert second_call_args[0][1] == "https://example.com/api/v1/integration/idoit_ticket_update"
+        assert second_call_args[1]["method"] == "POST"
+        assert json.loads(second_call_args[1]["data"]) == {"ticket_id": 1, "object_ids": ["123"]}
 
 
 def test_module_no_changes():
@@ -186,6 +186,6 @@ def test_module_success():
 
         # Überprüfen der übergebenen Parameter beim zweiten Aufruf
         second_call_args = mock_fetch_url.call_args_list[1]
-        assert second_call_args[0][1] == "https://example.com/api/v1/tickets/1"
-        assert second_call_args[1]["method"] == "PUT"
-        assert second_call_args[1]["data"] == '{"preferences": {"idoit": {"object_ids": ["123"]}}}'
+        assert second_call_args[0][1] == "https://example.com/api/v1/integration/idoit_ticket_update"
+        assert second_call_args[1]["method"] == "POST"
+        assert json.loads(second_call_args[1]["data"]) == {"ticket_id": 1, "object_ids": ["123"]}

@@ -110,8 +110,8 @@ def get_ticket(module, zammad_access, ticket_id):
 
 
 def change_idoit_object(module, zammad_access, ticket_id, object_ids):
-    data = {"preferences": {"idoit": {"object_ids": object_ids}}}
-    return make_request(module, "PUT", zammad_access, data, ticket_id)
+    data = {"ticket_id": ticket_id, "object_ids": object_ids}
+    return make_request(module, "POST", zammad_access, data, endpoint="integration/idoit_ticket_update")
 
 
 def run_module():
