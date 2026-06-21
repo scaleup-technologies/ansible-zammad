@@ -425,10 +425,14 @@ def run_module():
             if module.params["cc"]:
                 ticket_data["article"]["cc"] = module.params["cc"]
             ticket_data, status_code = create_ticket(module, zammad_access, ticket_data)
+            if isinstance(ticket_data, list):
+                ticket_id = ticket_data.get[0]("id")
+            else:
+                ticket_id = ticket_data["id"]
             result.update(
                 {
                     "changed": True,
-                    "ticket_id": ticket_data.get("id"),
+                    "ticket_id": ticket_id,
                     "status_code": status_code,
                     "message": "Ticket created successfully.",
                 }
